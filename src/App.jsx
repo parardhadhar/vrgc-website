@@ -354,6 +354,24 @@ const styles = `
     background: linear-gradient(90deg, var(--gta-green), #9be15d);
   }
 
+  .hero-title {
+    font-size: clamp(2.4rem, 9vw, 5rem);
+    line-height: 0.9;
+  }
+  .hero-subtitle {
+    font-size: clamp(1rem, 3.5vw, 1.25rem);
+  }
+
+  .page-pad {
+    padding: 7rem 24px 3rem;
+  }
+
+  .nav-bar {
+    height: 80px;
+  }
+  .nav-title { font-size: 1rem; }
+  .nav-subtitle { font-size: 0.75rem; }
+
   .parallax-layer {
     transition: transform 0.2s ease;
   }
@@ -481,6 +499,30 @@ const styles = `
     .ifruit {
       right: 12px;
       bottom: 12px;
+    }
+  }
+
+  @media (max-width: 640px) {
+    .nav-bar { height: 64px; }
+    .hero-title { font-size: clamp(2rem, 10vw, 3.5rem); }
+    .hero-subtitle { font-size: 0.95rem; }
+    .mini-player { width: 220px; }
+    .ifruit { width: 70px; height: 70px; }
+    .ifruit-panel { height: 460px; }
+    .page-pad { padding: 5.5rem 16px 2rem; }
+    .job-card { padding: 12px; gap: 12px; }
+    .gta-panel, .hud-card { padding: 12px; }
+    .gta-pill { font-size: 9px; }
+    .h-card { min-width: 180px; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .kenburns,
+    .breathing,
+    .floaty,
+    .pulse,
+    .wave span {
+      animation: none !important;
     }
   }
 
@@ -635,41 +677,74 @@ const RECRUIT_TEAMS = [
 ];
 
 // --- COMPONENTS ---
-const Navbar = ({ activeTab, setActiveTab, onBlip, onSelect }) => (
-  <nav className="fixed top-0 left-0 right-0 z-50 bg-black/90 border-b border-white/10 h-20 flex flex-col justify-center">
-    <div className="max-w-7xl mx-auto w-full px-6 flex justify-between items-center">
-      <div className="flex items-center gap-3">
-        <div className="w-10 h-10 bg-white rounded-full flex items-center justify-center">
-          <img src={vrgcLogo} alt="VRGC" className="w-6 h-6 object-contain" />
-        </div>
-        <div className="hidden md:block">
-          <h1 className="font-heist text-xl leading-none tracking-tight">VRGC ONLINE</h1>
-          <h1 className="font-heist text-sm leading-none text-gray-400 tracking-tight">GAMER ASYLUM 6.0</h1>
-        </div>
-      </div>
+const Navbar = ({ activeTab, setActiveTab, onBlip, onSelect }) => {
+  const [open, setOpen] = useState(false);
 
-      <div className="flex gap-8 md:gap-16">
-        {NAV_ITEMS.map((item) => (
+  return (
+      <nav className="fixed top-0 left-0 right-0 z-50 bg-black/90 border-b border-white/10 nav-bar">
+        <div className="flex items-center h-full">
+        <div className="max-w-7xl mx-auto w-full px-6 flex justify-between items-center">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 bg-white rounded-full flex items-center justify-center">
+              <img src={vrgcLogo} alt="VRGC" className="w-6 h-6 object-contain" loading="lazy" decoding="async" />
+            </div>
+            <div className="hidden md:block">
+              <h1 className="font-heist leading-none tracking-tight nav-title">VRGC ONLINE</h1>
+              <h1 className="font-heist leading-none text-gray-400 tracking-tight nav-subtitle">GAMER ASYLUM 6.0</h1>
+            </div>
+          </div>
+
+          <div className="hidden md:flex gap-8 md:gap-16">
+            {NAV_ITEMS.map((item) => (
+              <button
+                key={item}
+                onMouseEnter={onBlip}
+                onClick={() => { onSelect(); setActiveTab(item); }}
+                className={`font-pricedown text-2xl tracking-widest uppercase gta-menu-item ${
+                  activeTab === item ? 'active' : 'text-gray-500 hover:text-gray-300'
+                }`}
+              >
+                {item}
+              </button>
+            ))}
+          </div>
+
+          <div className="hidden md:flex items-center gap-2 text-xs text-gray-400 font-heist">
+            <span className="inline-block w-2 h-2 rounded-full bg-gta-green"></span>
+            ONLINE
+          </div>
+
           <button
-            key={item}
+            className="md:hidden border border-white/20 px-3 py-2 text-xs font-heist uppercase"
             onMouseEnter={onBlip}
-            onClick={() => { onSelect(); setActiveTab(item); }}
-            className={`font-pricedown text-2xl tracking-widest uppercase gta-menu-item ${
-              activeTab === item ? 'active' : 'text-gray-500 hover:text-gray-300'
-            }`}
+            onClick={() => { onSelect(); setOpen((v) => !v); }}
           >
-            {item}
+            Menu
           </button>
-        ))}
+        </div>
       </div>
 
-      <div className="hidden md:flex items-center gap-2 text-xs text-gray-400 font-heist">
-        <span className="inline-block w-2 h-2 rounded-full bg-gta-green"></span>
-        ONLINE
-      </div>
-    </div>
-  </nav>
-);
+      {open && (
+        <div className="md:hidden border-t border-white/10 bg-black/95">
+          <div className="px-6 py-4 grid grid-cols-2 gap-3">
+            {NAV_ITEMS.map((item) => (
+              <button
+                key={item}
+                onMouseEnter={onBlip}
+                onClick={() => { onSelect(); setActiveTab(item); setOpen(false); }}
+                className={`text-left px-3 py-2 border border-white/10 font-heist uppercase text-xs ${
+                  activeTab === item ? 'bg-white/10 text-white' : 'text-gray-300'
+                }`}
+              >
+                {item}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+    </nav>
+  );
+};
 
 const LoadingHome = ({ onStart, onBlip, onSelect }) => {
   const [slideIndex, setSlideIndex] = useState(0);
@@ -717,10 +792,10 @@ const LoadingHome = ({ onStart, onBlip, onSelect }) => {
       <div className="relative z-20 w-full max-w-7xl px-6 grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
         <div className="text-left space-y-6">
           <div className="inline-block gta-pill text-white">Loading Screen</div>
-          <h1 className="font-pricedown text-7xl md:text-8xl text-white drop-shadow-[5px_5px_0_rgba(0,0,0,1)] leading-[0.8]">
+          <h1 className="font-pricedown hero-title text-white drop-shadow-[5px_5px_0_rgba(0,0,0,1)]">
             {slide.title}
           </h1>
-          <p className="font-sans text-xl text-gray-300 max-w-md leading-relaxed border-l-4 border-gta-green pl-4">
+          <p className="font-sans hero-subtitle text-gray-300 max-w-md leading-relaxed border-l-4 border-gta-green pl-4">
             {slide.subtitle}
           </p>
           <div className="space-y-2 max-w-md">
@@ -767,7 +842,7 @@ const LoadingHome = ({ onStart, onBlip, onSelect }) => {
             <div className="hud-card p-5">
               <div className="text-xs text-gray-400 font-heist">FEATURED EVENT</div>
               <div className="mt-3 flex items-center gap-3">
-                <img src={valoPoster} alt="Valorant" className="w-16 h-16 object-cover border border-white/20" />
+                <img src={valoPoster} alt="Valorant" className="w-16 h-16 object-cover border border-white/20" loading="lazy" decoding="async" />
                 <div>
                   <div className="font-heist text-lg">Valorant Finals</div>
                   <div className="text-xs text-gray-400">Prize Pool ₹50K+</div>
@@ -777,7 +852,7 @@ const LoadingHome = ({ onStart, onBlip, onSelect }) => {
             <div className="hud-card p-5 neon-border">
               <div className="text-xs text-gray-400 font-heist">CHARACTER SELECT</div>
               <div className="mt-3 flex items-center gap-3">
-                <img src={CREW[charIndex].img} alt={CREW[charIndex].name} className="w-16 h-16 object-cover border border-white/20" />
+                <img src={CREW[charIndex].img} alt={CREW[charIndex].name} className="w-16 h-16 object-cover border border-white/20" loading="lazy" decoding="async" />
                 <div>
                   <div className="font-heist text-lg">{CREW[charIndex].name}</div>
                   <div className="text-xs text-gray-400">{CREW[charIndex].role}</div>
@@ -830,7 +905,7 @@ const LoadingHome = ({ onStart, onBlip, onSelect }) => {
 };
 
 const JobBoard = ({ onSelectJob, onBlip, onSelect }) => (
-  <div className="pt-28 pb-12 px-6 max-w-7xl mx-auto min-h-screen">
+  <div className="page-pad max-w-7xl mx-auto min-h-screen">
     <div className="flex items-center justify-between mb-8 border-b border-white/20 pb-4">
       <h2 className="font-heist text-4xl tracking-tighter">AVAILABLE JOBS</h2>
       <div className="flex gap-2">
@@ -870,8 +945,8 @@ const JobBoard = ({ onSelectJob, onBlip, onSelect }) => (
           onClick={() => { onSelect(); onSelectJob(job); }}
           className="job-card bg-black/50 border border-white/10 p-4 flex flex-col md:flex-row gap-6 cursor-pointer group transition-all"
         >
-          <div className="w-full md:w-64 h-36 bg-gray-800 relative overflow-hidden shrink-0 border border-white/20">
-            <img src={job.image} className="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all duration-500" alt={job.title} />
+          <div className="w-full md:w-64 h-28 md:h-36 bg-gray-800 relative overflow-hidden shrink-0 border border-white/20">
+            <img src={job.image} className="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all duration-500" alt={job.title} loading="lazy" decoding="async" />
             <div className="absolute top-0 left-0 bg-gta-green text-black font-bold px-2 py-0.5 text-xs uppercase">
               2x RP
             </div>
@@ -909,7 +984,7 @@ const CrewRoster = ({ onBlip, onSelect }) => {
   const selected = CREW.find((m) => m.id === selectedId) || CREW[0];
 
   return (
-    <div className="pt-28 pb-12 px-6 max-w-7xl mx-auto min-h-screen">
+    <div className="page-pad max-w-7xl mx-auto min-h-screen">
       <div className="mb-8 gta-divider pb-4">
         <h2 className="font-heist text-4xl tracking-tighter">CREW STATS</h2>
       </div>
@@ -940,7 +1015,7 @@ const CrewRoster = ({ onBlip, onSelect }) => {
           <div className="bg-black/60 border border-white/10 p-4">
             <div className="text-xs text-gray-400 font-heist">MUGSHOT</div>
             <div className="mt-3 aspect-[3/4] border border-white/20 bg-black/70 overflow-hidden">
-              <img src={selected.img} alt={selected.name} className="w-full h-full object-cover" />
+              <img src={selected.img} alt={selected.name} className="w-full h-full object-cover" loading="lazy" decoding="async" />
             </div>
           </div>
 
@@ -978,7 +1053,7 @@ const CrewRoster = ({ onBlip, onSelect }) => {
 };
 
 const RecruitmentPage = ({ onBlip, onSelect }) => (
-  <div className="pt-28 pb-12 px-6 max-w-7xl mx-auto min-h-screen">
+  <div className="page-pad max-w-7xl mx-auto min-h-screen">
     <div className="mb-8 gta-divider pb-4 flex items-center justify-between">
       <h2 className="font-heist text-4xl tracking-tighter">RECRUITMENT OFFICE</h2>
       <span className="gta-pill text-white">APPLICATIONS OPEN</span>
@@ -1030,7 +1105,7 @@ const RecruitmentPage = ({ onBlip, onSelect }) => (
 );
 
 const AboutSection = ({ onBlip, onSelect }) => (
-  <div className="pt-28 pb-12 px-6 max-w-7xl mx-auto min-h-screen">
+  <div className="page-pad max-w-7xl mx-auto min-h-screen">
     <div className="mb-8 gta-divider pb-4 flex items-center justify-between">
       <h2 className="font-heist text-4xl tracking-tighter">ABOUT VRGC</h2>
       <span className="gta-pill text-white">EST. 2020</span>
@@ -1077,7 +1152,7 @@ const AboutSection = ({ onBlip, onSelect }) => (
 );
 
 const GallerySection = ({ onBlip, onSelect }) => (
-  <div className="pt-28 pb-12 px-6 max-w-7xl mx-auto min-h-screen">
+  <div className="page-pad max-w-7xl mx-auto min-h-screen">
     <div className="mb-8 gta-divider pb-4 flex items-center justify-between">
       <h2 className="font-heist text-4xl tracking-tighter">GALLERY</h2>
       <span className="gta-pill text-white">HIGHLIGHTS</span>
@@ -1099,7 +1174,7 @@ const GallerySection = ({ onBlip, onSelect }) => (
           className="bg-black/60 border border-white/10 overflow-hidden text-left gallery-card"
         >
           <div className="h-48 bg-black relative">
-            <img src={item.img} alt={item.label} className="w-full h-full object-cover" />
+            <img src={item.img} alt={item.label} className="w-full h-full object-cover" loading="lazy" decoding="async" />
             <div className="gallery-overlay">View</div>
           </div>
           <div className="p-3 text-sm text-gray-300 font-heist">{item.label}</div>
@@ -1123,7 +1198,7 @@ const RadioSection = ({
   const stationTracks = RADIO_TRACKS.filter((t) => t.station === selectedStation);
 
   return (
-    <div className="pt-28 pb-12 px-6 max-w-7xl mx-auto min-h-screen">
+    <div className="page-pad max-w-7xl mx-auto min-h-screen">
       <div className="mb-8 gta-divider pb-4 flex items-center justify-between">
         <h2 className="font-heist text-4xl tracking-tighter">RADIO</h2>
         <span className="gta-pill text-white">SELECT TO PLAY</span>
