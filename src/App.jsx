@@ -218,6 +218,62 @@ const styles = `
     0%, 100% { height: 4px; }
     50% { height: 14px; }
   }
+
+  .radio-disc {
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    border: 2px solid rgba(255,255,255,0.5);
+    position: relative;
+  }
+  .radio-disc::after {
+    content: '';
+    position: absolute;
+    inset: 6px;
+    border-radius: 50%;
+    background: #9be15d;
+  }
+  .radio-disc.playing {
+    animation: discspin 2s linear infinite;
+  }
+  @keyframes discspin {
+    to { transform: rotate(360deg); }
+  }
+
+  .radio-dial {
+    width: 140px;
+    height: 140px;
+    border-radius: 50%;
+    border: 2px solid rgba(255,255,255,0.25);
+    display: grid;
+    place-items: center;
+    background: radial-gradient(circle at 30% 30%, #1c1c1c, #0a0a0a 70%);
+    position: relative;
+  }
+  .radio-dial::after {
+    content: '';
+    position: absolute;
+    inset: 12px;
+    border-radius: 50%;
+    border: 1px solid rgba(255,255,255,0.15);
+  }
+  .radio-knob {
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    background: #9be15d;
+    position: absolute;
+    top: 6px;
+    left: 50%;
+    transform: translateX(-50%);
+    box-shadow: 0 0 12px rgba(155,225,93,0.6);
+  }
+  .radio-label {
+    font-size: 10px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: #cfcfcf;
+  }
   @keyframes floaty {
     0%, 100% { transform: translateY(0); }
     50% { transform: translateY(-3px); }
@@ -539,7 +595,7 @@ const styles = `
 `;
 
 // --- DATA ---
-const NAV_ITEMS = ['HOME', 'JOBS', 'CREW', 'RECRUITMENT', 'ABOUT', 'GALLERY', 'RADIO'];
+const NAV_ITEMS = ['HOME', 'EVENTS', 'CREW', 'RECRUITMENT', 'ABOUT', 'GALLERY', 'RADIO'];
 
 const LOADING_SLIDES = [
   {
@@ -907,16 +963,16 @@ const LoadingHome = ({ onStart, onBlip, onSelect }) => {
 const JobBoard = ({ onSelectJob, onBlip, onSelect }) => (
   <div className="page-pad max-w-7xl mx-auto min-h-screen">
     <div className="flex items-center justify-between mb-8 border-b border-white/20 pb-4">
-      <h2 className="font-heist text-4xl tracking-tighter">AVAILABLE JOBS</h2>
+      <h2 className="font-heist text-4xl tracking-tighter">EVENTS</h2>
       <div className="flex gap-2">
         <span className="bg-white text-black px-3 py-1 font-bold text-xs">ALL</span>
-        <span className="bg-black border border-white/30 text-gray-400 px-3 py-1 font-bold text-xs">HEISTS</span>
-        <span className="bg-black border border-white/30 text-gray-400 px-3 py-1 font-bold text-xs">RACES</span>
+        <span className="bg-black border border-white/30 text-gray-400 px-3 py-1 font-bold text-xs">TOURNAMENTS</span>
+        <span className="bg-black border border-white/30 text-gray-400 px-3 py-1 font-bold text-xs">LAN</span>
       </div>
     </div>
 
     <div className="mb-6">
-      <div className="text-xs text-gray-400 font-heist tracking-[0.3em] mb-3">FEATURED RUNS</div>
+      <div className="text-xs text-gray-400 font-heist tracking-[0.3em] mb-3">FEATURED EVENTS</div>
       <div className="h-scroll">
         {JOBS.map((job) => (
           <button
@@ -1195,6 +1251,20 @@ const RadioSection = ({
 }) => {
   const [selectedStation, setSelectedStation] = useState(RADIO_STATIONS[0].name);
 
+  const prevRadio = () => {
+    const idx = RADIO_STATIONS.findIndex((s) => s.name === selectedStation);
+    const nextIdx = (idx - 1 + RADIO_STATIONS.length) % RADIO_STATIONS.length;
+    setSelectedStation(RADIO_STATIONS[nextIdx].name);
+    onStop();
+  };
+
+  const nextRadio = () => {
+    const idx = RADIO_STATIONS.findIndex((s) => s.name === selectedStation);
+    const nextIdx = (idx + 1) % RADIO_STATIONS.length;
+    setSelectedStation(RADIO_STATIONS[nextIdx].name);
+    onStop();
+  };
+
   const stationTracks = RADIO_TRACKS.filter((t) => t.station === selectedStation);
 
   return (
@@ -1207,6 +1277,23 @@ const RadioSection = ({
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         <div className="gta-panel p-6">
           <h3 className="font-heist text-2xl mb-4">STATIONS</h3>
+          <div className="flex items-center gap-4 mb-4">
+            <div
+              className="radio-dial"
+              onWheel={(e) => {
+                e.preventDefault();
+                if (e.deltaY > 0) nextRadio();
+                else prevRadio();
+              }}
+            >
+              <div className="radio-knob"></div>
+            </div>
+            <div>
+              <div className="radio-label">Station</div>
+              <div className="font-heist text-lg text-white">{selectedStation}</div>
+              <div className="text-xs text-gray-400">Scroll to change</div>
+            </div>
+          </div>
           <div className="space-y-3">
             {RADIO_STATIONS.map((s) => (
               <button
@@ -1292,14 +1379,17 @@ const RadioSection = ({
 const MissionModal = ({ job, onClose, onSelect }) => {
   const [phase, setPhase] = useState('briefing');
 
-  const handleStart = () => {
+  const handleRegister = () => {
     setPhase('passed');
+    if (job.url) {
+      window.open(job.url, '_blank', 'noopener,noreferrer');
+    }
   };
 
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/95 backdrop-blur-md">
       {phase === 'briefing' ? (
-        <div className="w-full max-w-4xl bg-[#1a1a1a] border border-white/10 grid grid-cols-1 md:grid-cols-2 shadow-2xl">
+        <div className="w-full max-w-5xl bg-[#1a1a1a] border border-white/10 grid grid-cols-1 md:grid-cols-2 shadow-2xl">
           <div className="h-64 md:h-auto relative">
              <img src={job.image} className="w-full h-full object-cover opacity-80" alt={job.title} />
              <div className="absolute bottom-0 left-0 bg-gta-green text-black font-heist px-4 py-2 text-xl">
@@ -1311,11 +1401,11 @@ const MissionModal = ({ job, onClose, onSelect }) => {
             <div>
               <div className="flex justify-between items-start mb-6">
                 <div>
-                   <h2 className="font-heist text-3xl text-white">JOB DETAILS</h2>
+                   <h2 className="font-heist text-3xl text-white">EVENT DETAILS</h2>
                    <div className="h-1 w-12 bg-gta-green mt-1"></div>
                 </div>
                 <div className="text-right">
-                  <div className="text-xs text-gray-500 uppercase font-bold">Payout</div>
+                  <div className="text-xs text-gray-500 uppercase font-bold">Prize</div>
                   <div className="text-gta-green font-pricedown text-3xl">{job.cash}</div>
                 </div>
               </div>
@@ -1330,28 +1420,27 @@ const MissionModal = ({ job, onClose, onSelect }) => {
               </div>
             </div>
 
-            <div className="flex gap-4 mt-8">
-              <button
-                onClick={() => { onSelect(); handleStart(); }}
-                className="flex-1 bg-white text-black font-heist text-xl py-3 hover:bg-gray-200 transition-colors uppercase"
-              >
-                Confirm
-              </button>
-              {job.url && (
-                <a
-                  href={job.url}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="px-6 border border-white/20 hover:bg-white/10 text-white font-heist text-xl py-3 transition-colors uppercase"
+            <div className="flex flex-col md:flex-row gap-4 mt-8">
+              {job.url ? (
+                <button
+                  onClick={() => { onSelect(); handleRegister(); }}
+                  className="flex-1 bg-white text-black font-heist text-xl py-3 hover:bg-gray-200 transition-colors uppercase"
                 >
-                  Register
-                </a>
+                  Register Event
+                </button>
+              ) : (
+                <button
+                  onClick={onSelect}
+                  className="flex-1 bg-white/20 text-gray-300 font-heist text-xl py-3 uppercase cursor-not-allowed"
+                >
+                  Coming Soon
+                </button>
               )}
               <button
                 onClick={() => { onSelect(); onClose(); }}
                 className="px-6 border border-white/20 hover:bg-white/10 text-white font-heist text-xl py-3 transition-colors uppercase"
               >
-                Exit
+                Close
               </button>
             </div>
           </div>
@@ -1376,7 +1465,7 @@ const MissionModal = ({ job, onClose, onSelect }) => {
 
           <div className="bg-black/80 border border-white/20 p-8 w-full max-w-md backdrop-blur-md animate-[pass-banner-slide_0.5s_ease-out_0.5s_forwards] opacity-0">
              <div className="flex justify-between items-center border-b border-white/20 pb-4 mb-4">
-               <span className="text-gray-400 uppercase font-bold text-sm">Job</span>
+               <span className="text-gray-400 uppercase font-bold text-sm">Event</span>
                <span className="text-white font-bold uppercase">{job.title}</span>
              </div>
 
@@ -1408,7 +1497,7 @@ const IfruitPhone = ({ onNavigate, onBlip, onSelect }) => {
   const [open, setOpen] = useState(false);
 
   const apps = [
-    { id: 'JOBS', label: 'Jobs', icon: Briefcase },
+    { id: 'EVENTS', label: 'Events', icon: Briefcase },
     { id: 'CREW', label: 'Contacts', icon: Users },
     { id: 'RECRUITMENT', label: 'Recruit', icon: Shield },
     { id: 'ABOUT', label: 'About', icon: Play },
@@ -1446,7 +1535,7 @@ const IfruitPhone = ({ onNavigate, onBlip, onSelect }) => {
             <button className="ifruit-home" onMouseEnter={onBlip} onClick={() => { onSelect(); onNavigate('HOME'); setOpen(false); }}>
               <Play className="w-5 h-5 text-white" />
             </button>
-            <button className="ifruit-home" onMouseEnter={onBlip} onClick={() => { onSelect(); onNavigate('JOBS'); setOpen(false); }}>
+            <button className="ifruit-home" onMouseEnter={onBlip} onClick={() => { onSelect(); onNavigate('EVENTS'); setOpen(false); }}>
               <Briefcase className="w-5 h-5 text-white" />
             </button>
             <button className="ifruit-home" onMouseEnter={onBlip} onClick={() => { onSelect(); onNavigate('CREW'); setOpen(false); }}>
@@ -1583,8 +1672,8 @@ export default function App() {
       <div className="relative z-10">
         <Navbar activeTab={activeTab} setActiveTab={setActiveTab} onBlip={blip} onSelect={select} />
 
-        {activeTab === 'HOME' && <LoadingHome onStart={() => setActiveTab('JOBS')} onBlip={blip} onSelect={select} />}
-        {activeTab === 'JOBS' && <JobBoard onSelectJob={setSelectedJob} onBlip={blip} onSelect={select} />}
+        {activeTab === 'HOME' && <LoadingHome onStart={() => setActiveTab('EVENTS')} onBlip={blip} onSelect={select} />}
+        {activeTab === 'EVENTS' && <JobBoard onSelectJob={setSelectedJob} onBlip={blip} onSelect={select} />}
         {activeTab === 'CREW' && <CrewRoster onBlip={blip} onSelect={select} />}
         {activeTab === 'RECRUITMENT' && <RecruitmentPage onBlip={blip} onSelect={select} />}
         {activeTab === 'ABOUT' && <AboutSection onBlip={blip} onSelect={select} />}
@@ -1615,11 +1704,7 @@ export default function App() {
               <div className="meta">{nowPlaying.title} — {nowPlaying.artist}</div>
               {audioError && <div className="meta" style={{ color: '#ff8a8a' }}>{audioError}</div>}
             </div>
-            {isPlaying && (
-              <div className="wave" aria-hidden="true">
-                <span></span><span></span><span></span><span></span><span></span>
-              </div>
-            )}
+            <div className={`radio-disc ${isPlaying ? 'playing' : ''}`} aria-hidden="true"></div>
             <button
               onMouseEnter={blip}
               onClick={() => { select(); handlePauseTrack(); }}
