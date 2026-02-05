@@ -326,6 +326,100 @@ const styles = `
     color: #000;
     box-shadow: 0 0 14px rgba(155,225,93,0.6);
   }
+
+  .splash {
+    position: fixed;
+    inset: 0;
+    z-index: 200;
+    background: #0a0a0a;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+    overflow: hidden;
+  }
+  .splash::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(circle at 20% 20%, rgba(86,169,94,0.15), transparent 45%),
+                radial-gradient(circle at 80% 80%, rgba(155,225,93,0.12), transparent 45%);
+    animation: splash-glow 3s ease-in-out infinite;
+    pointer-events: none;
+  }
+  .splash::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: repeating-linear-gradient(
+      to bottom,
+      rgba(255,255,255,0.03) 0,
+      rgba(255,255,255,0.03) 1px,
+      transparent 2px,
+      transparent 4px
+    );
+    opacity: 0.35;
+    pointer-events: none;
+  }
+  .splash.exit {
+    animation: splash-slide-up 0.8s ease forwards;
+  }
+  .splash-card {
+    text-align: center;
+    padding: 24px 28px;
+    border: 1px solid rgba(255,255,255,0.15);
+    background: rgba(0,0,0,0.7);
+    box-shadow: 0 20px 60px rgba(0,0,0,0.6);
+    animation: splash-pop 0.6s ease forwards;
+  }
+  .splash-zoom {
+    animation: splash-zoom 2.2s ease-in-out forwards;
+  }
+  .splash-logo {
+    width: 96px;
+    height: 96px;
+    border-radius: 50%;
+    background: #fff;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 12px;
+    animation: splash-bob 2.4s ease-in-out infinite;
+  }
+  .splash-title {
+    font-size: clamp(1.5rem, 6vw, 3rem);
+    text-transform: uppercase;
+    letter-spacing: 0.2em;
+  }
+  .splash-sub {
+    font-size: clamp(0.75rem, 3vw, 1rem);
+    color: #cfcfcf;
+    margin-top: 8px;
+  }
+  .tear,
+  .wipe {
+    display: none;
+  }
+  @keyframes splash-pop {
+    0% { transform: scale(0.9); opacity: 0; }
+    100% { transform: scale(1); opacity: 1; }
+  }
+  @keyframes splash-zoom {
+    0% { transform: scale(1); }
+    60% { transform: scale(1.06); }
+    100% { transform: scale(1.02); }
+  }
+  @keyframes splash-bob {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-6px); }
+  }
+  @keyframes splash-glow {
+    0%, 100% { opacity: 0.6; }
+    50% { opacity: 1; }
+  }
+  @keyframes splash-slide-up {
+    to { transform: translateY(-120%); }
+  }
   @keyframes floaty {
     0%, 100% { transform: translateY(0); }
     50% { transform: translateY(-3px); }
@@ -1682,6 +1776,8 @@ export default function App() {
   const [audioError, setAudioError] = useState(null);
   const [playerPos, setPlayerPos] = useState({ x: 16, y: 16 });
   const [dragging, setDragging] = useState(false);
+  const [showSplash, setShowSplash] = useState(true);
+  const [splashExit, setSplashExit] = useState(false);
 
   const initAudio = () => {
     if (uiAudioRef.current) return;
@@ -1776,11 +1872,37 @@ export default function App() {
   }, []);
 
   useEffect(() => {
+    const t1 = setTimeout(() => setSplashExit(true), 2800);
+    const t2 = setTimeout(() => setShowSplash(false), 3600);
+    return () => {
+      clearTimeout(t1);
+      clearTimeout(t2);
+    };
+  }, []);
+
+  useEffect(() => {
     // keep music playing across pages; no auto-stop on tab change
   }, [activeTab]);
 
   return (
     <div className="min-h-screen relative text-[#f0f0f0] bg-[#0f0f0f]" onClick={initAudio} onKeyDown={initAudio}>
+      {showSplash && (
+        <div className={`splash ${splashExit ? 'exit' : ''}`}>
+          <div className="tear left"></div>
+          <div className="tear right"></div>
+          <div className="wipe"></div>
+          <div className="splash-card">
+            <div className="splash-logo">
+              <img src={vrgcLogo} alt="VRGC" className="w-12 h-12 object-contain" />
+            </div>
+            <div className="font-pricedown splash-title splash-zoom">VRGC ONLINE</div>
+            <div className="splash-sub splash-zoom">GTA Style Experience</div>
+            <div className="splash-sub splash-zoom">
+              Dedicated to GTA and Rockstar Games for their iconic series
+            </div>
+          </div>
+        </div>
+      )}
       <div className="fixed inset-0 bg-noise z-0 pointer-events-none"></div>
 
       <div className="relative z-10">
