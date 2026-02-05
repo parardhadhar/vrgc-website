@@ -1303,6 +1303,8 @@ const RadioSection = ({
 }) => {
   const [selectedStation, setSelectedStation] = useState(RADIO_STATIONS[0].name);
   const dialRef = useRef(null);
+  const [wheelRotation, setWheelRotation] = useState(0);
+  const touchRef = useRef({ active: false, lastAngle: 0 });
 
   const prevRadio = () => {
     const idx = RADIO_STATIONS.findIndex((s) => s.name === selectedStation);
@@ -1318,12 +1320,21 @@ const RadioSection = ({
     onStop();
   };
 
+  const angleFromTouch = (touch) => {
+    if (!dialRef.current) return 0;
+    const rect = dialRef.current.getBoundingClientRect();
+    const cx = rect.left + rect.width / 2;
+    const cy = rect.top + rect.height / 2;
+    return (Math.atan2(touch.clientY - cy, touch.clientX - cx) * 180) / Math.PI;
+  };
+
   useEffect(() => {
     if (!dialRef.current) return;
     const handleWheel = (e) => {
       e.preventDefault();
       if (e.deltaY > 0) nextRadio();
       else prevRadio();
+      setWheelRotation((prev) => prev + (e.deltaY > 0 ? 12 : -12));
     };
     const node = dialRef.current;
     node.addEventListener('wheel', handleWheel, { passive: false });
@@ -1348,6 +1359,25 @@ const RadioSection = ({
               className="radio-wheel"
               onClick={() => { onSelect(); nextRadio(); }}
               onMouseEnter={onBlip}
+              onTouchStart={(e) => {
+                const touch = e.touches[0];
+                touchRef.current.active = true;
+                touchRef.current.lastAngle = angleFromTouch(touch);
+              }}
+              onTouchMove={(e) => {
+                if (!touchRef.current.active) return;
+                const touch = e.touches[0];
+                const angle = angleFromTouch(touch);
+                const delta = angle - touchRef.current.lastAngle;
+                if (Math.abs(delta) > 12) {
+                  if (delta > 0) nextRadio();
+                  else prevRadio();
+                  touchRef.current.lastAngle = angle;
+                }
+                setWheelRotation((prev) => prev + delta * 0.4);
+                e.preventDefault();
+              }}
+              onTouchEnd={() => { touchRef.current.active = false; }}
               role="button"
               aria-label="Change radio station"
               tabIndex={0}
@@ -1357,7 +1387,7 @@ const RadioSection = ({
               }}
             >
               {RADIO_STATIONS.map((s, idx) => {
-                const angle = (360 / RADIO_STATIONS.length) * idx;
+                const angle = (360 / RADIO_STATIONS.length) * idx + wheelRotation;
                 return (
                   <div
                     key={s.id}
