@@ -1840,6 +1840,9 @@ export default function App() {
           Disclaimer: VRGC does not own or claim copyright to any third-party content, music, images, or
           trademarks displayed on this site. All rights belong to their respective owners. Content is used
           for showcase/demo purposes only.
+          <div className="mt-2">
+            Dedication: This year’s website theme is dedicated to GTA and Rockstar Games for their iconic game series.
+          </div>
         </footer>
       </div>
     </div>
