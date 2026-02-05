@@ -274,6 +274,58 @@ const styles = `
     text-transform: uppercase;
     color: #cfcfcf;
   }
+
+  .radio-wheel {
+    position: relative;
+    width: 200px;
+    height: 200px;
+    border-radius: 50%;
+    border: 2px solid rgba(255,255,255,0.25);
+    background: radial-gradient(circle at 30% 30%, #1c1c1c, #0a0a0a 70%);
+  }
+  .radio-wheel::after {
+    content: '';
+    position: absolute;
+    inset: 20px;
+    border-radius: 50%;
+    border: 1px solid rgba(255,255,255,0.15);
+  }
+  .radio-wheel-center {
+    position: absolute;
+    inset: 68px;
+    border-radius: 50%;
+    background: #111;
+    border: 1px solid rgba(255,255,255,0.2);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    color: #fff;
+    font-size: 10px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+  }
+  .radio-wheel-item {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 34px;
+    height: 34px;
+    margin: -17px;
+    border-radius: 50%;
+    border: 1px solid rgba(255,255,255,0.35);
+    background: #0d0d0d;
+    color: #fff;
+    font-size: 9px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .radio-wheel-item.active {
+    background: #9be15d;
+    color: #000;
+    box-shadow: 0 0 14px rgba(155,225,93,0.6);
+  }
   @keyframes floaty {
     0%, 100% { transform: translateY(0); }
     50% { transform: translateY(-3px); }
@@ -1250,6 +1302,7 @@ const RadioSection = ({
   onStop,
 }) => {
   const [selectedStation, setSelectedStation] = useState(RADIO_STATIONS[0].name);
+  const dialRef = useRef(null);
 
   const prevRadio = () => {
     const idx = RADIO_STATIONS.findIndex((s) => s.name === selectedStation);
@@ -1265,6 +1318,18 @@ const RadioSection = ({
     onStop();
   };
 
+  useEffect(() => {
+    if (!dialRef.current) return;
+    const handleWheel = (e) => {
+      e.preventDefault();
+      if (e.deltaY > 0) nextRadio();
+      else prevRadio();
+    };
+    const node = dialRef.current;
+    node.addEventListener('wheel', handleWheel, { passive: false });
+    return () => node.removeEventListener('wheel', handleWheel);
+  }, [selectedStation]);
+
   const stationTracks = RADIO_TRACKS.filter((t) => t.station === selectedStation);
 
   return (
@@ -1279,14 +1344,33 @@ const RadioSection = ({
           <h3 className="font-heist text-2xl mb-4">STATIONS</h3>
           <div className="flex items-center gap-4 mb-4">
             <div
-              className="radio-dial"
-              onWheel={(e) => {
-                e.preventDefault();
-                if (e.deltaY > 0) nextRadio();
-                else prevRadio();
+              ref={dialRef}
+              className="radio-wheel"
+              onClick={() => { onSelect(); nextRadio(); }}
+              onMouseEnter={onBlip}
+              role="button"
+              aria-label="Change radio station"
+              tabIndex={0}
+              onKeyDown={(e) => {
+                if (e.key === 'ArrowRight' || e.key === 'ArrowDown') nextRadio();
+                if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') prevRadio();
               }}
             >
-              <div className="radio-knob"></div>
+              {RADIO_STATIONS.map((s, idx) => {
+                const angle = (360 / RADIO_STATIONS.length) * idx;
+                return (
+                  <div
+                    key={s.id}
+                    className={`radio-wheel-item ${selectedStation === s.name ? 'active' : ''}`}
+                    style={{
+                      transform: `rotate(${angle}deg) translate(84px) rotate(-${angle}deg)`
+                    }}
+                  >
+                    {s.id}
+                  </div>
+                );
+              })}
+              <div className="radio-wheel-center">{selectedStation}</div>
             </div>
             <div>
               <div className="radio-label">Station</div>
